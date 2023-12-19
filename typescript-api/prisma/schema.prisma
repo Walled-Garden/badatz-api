@@ -1,0 +1,823 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [ltree]
+}
+
+model activity {
+  id           BigInt   @id(map: "activity_pk") @default(autoincrement())
+  created_at   DateTime @db.Timestamp(6)
+  action       String   @db.VarChar(24)
+  event_name   String   @db.VarChar(32)
+  priority     String   @db.VarChar(12)
+  object_id    BigInt?
+  object_name  String   @db.VarChar(128)
+  object_type  String   @db.VarChar(24)
+  project_id   BigInt?
+  details      Json?
+  subject_id   BigInt?
+  subject_name String   @db.VarChar(128)
+  subject_type String   @db.VarChar(32)
+  project      project? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at])
+  @@index([object_id], map: "activity_object_idx")
+  @@index([project_id], map: "activity_project_idx")
+}
+
+model api_keys {
+  id           BigInt    @id @default(autoincrement())
+  name         String?   @db.VarChar(255)
+  hash         String?   @db.VarChar(255)
+  created_at   DateTime  @db.Timestamp(6)
+  user_id      BigInt?
+  last_used_at DateTime? @db.Date
+  users        users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([name, user_id], map: "users_api_keys_unique")
+  @@index([hash], map: "hash_api_keys_idx")
+}
+
+model attachment {
+  id            BigInt   @id(map: "attachment_pk") @default(autoincrement())
+  file_id       String
+  thumbnail_id  String?
+  content_type  String?
+  project_id    BigInt?
+  launch_id     BigInt?
+  item_id       BigInt?
+  file_size     BigInt   @default(0)
+  creation_date DateTime @db.Timestamp(6)
+  file_name     String?  @db.VarChar(512)
+  log           log[]
+
+  @@index([item_id], map: "att_item_idx")
+  @@index([launch_id], map: "att_launch_idx")
+  @@index([project_id], map: "att_project_idx")
+  @@index([project_id, creation_date], map: "attachment_project_id_creation_time_idx")
+}
+
+model attachment_deletion {
+  id                       BigInt    @id
+  file_id                  String
+  thumbnail_id             String?
+  creation_attachment_date DateTime? @db.Timestamp(6)
+  deletion_date            DateTime? @db.Timestamp(6)
+}
+
+model attribute {
+  id                BigInt              @id(map: "attribute_pk") @default(autoincrement())
+  name              String?             @db.VarChar(256)
+  project_attribute project_attribute[]
+}
+
+model clusters {
+  id         BigInt @id(map: "clusters_pk") @default(autoincrement())
+  index_id   BigInt
+  project_id BigInt
+  launch_id  BigInt
+  message    String
+
+  @@unique([index_id, launch_id], map: "index_id_launch_id_unq")
+  @@index([index_id], map: "cluster_index_id_idx")
+  @@index([launch_id], map: "cluster_launch_idx")
+  @@index([project_id], map: "cluster_project_idx")
+}
+
+model clusters_test_item {
+  cluster_id BigInt
+  item_id    BigInt
+
+  @@unique([cluster_id, item_id], map: "cluster_item_unq")
+  @@index([cluster_id], map: "cluster_item_cluster_idx")
+  @@index([item_id], map: "cluster_item_item_idx")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model content_field {
+  id     BigInt  @id @default(autoincrement())
+  field  String  @db.VarChar
+  widget widget? @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([field], map: "content_field_idx")
+  @@index([id], map: "content_field_widget_idx")
+}
+
+model dashboard {
+  id               BigInt             @id
+  name             String             @db.VarChar
+  description      String?            @db.VarChar
+  creation_date    DateTime           @default(now()) @db.Timestamp(6)
+  owned_entity     owned_entity       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "dashboard_id_fk")
+  dashboard_widget dashboard_widget[]
+}
+
+model dashboard_widget {
+  dashboard_id      BigInt
+  widget_id         BigInt
+  widget_name       String    @db.VarChar
+  widget_owner      String    @db.VarChar
+  widget_type       String    @db.VarChar
+  widget_width      Int
+  widget_height     Int
+  widget_position_x Int
+  widget_position_y Int
+  is_created_on     Boolean   @default(false)
+  dashboard         dashboard @relation(fields: [dashboard_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  widget            widget    @relation(fields: [widget_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([dashboard_id, widget_id], map: "dashboard_widget_pk")
+  @@unique([dashboard_id, widget_name, widget_owner], map: "widget_on_dashboard_unq")
+}
+
+model filter {
+  id               BigInt             @id
+  name             String             @db.VarChar
+  target           String             @db.VarChar
+  description      String?            @db.VarChar
+  owned_entity     owned_entity       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "filter_id_fk")
+  filter_condition filter_condition[]
+  filter_sort      filter_sort[]
+  user_preference  user_preference[]
+  widget_filter    widget_filter[]
+}
+
+model filter_condition {
+  id              BigInt                @id(map: "filter_condition_pk") @default(autoincrement())
+  filter_id       BigInt?
+  condition       filter_condition_enum
+  value           String                @db.VarChar
+  search_criteria String                @db.VarChar
+  negative        Boolean
+  filter          filter?               @relation(fields: [filter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([filter_id], map: "filter_cond_filter_idx")
+}
+
+model filter_sort {
+  id        BigInt              @id(map: "filter_sort_pk") @default(autoincrement())
+  filter_id BigInt?
+  field     String              @db.VarChar
+  direction sort_direction_enum @default(ASC)
+  filter    filter?             @relation(fields: [filter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([filter_id], map: "filter_sort_filter_idx")
+}
+
+model integration {
+  id               Int               @id(map: "integration_pk") @default(autoincrement())
+  name             String            @db.VarChar
+  project_id       BigInt?
+  type             Int?
+  enabled          Boolean
+  params           Json?
+  creator          String            @db.VarChar
+  creation_date    DateTime          @default(now()) @db.Timestamp(6)
+  project          project?          @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  integration_type integration_type? @relation(fields: [type], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "integr_project_idx")
+}
+
+model integration_type {
+  id            Int                         @id(map: "integration_type_pk") @default(autoincrement())
+  name          String                      @unique @db.VarChar(128)
+  auth_flow     integration_auth_flow_enum?
+  creation_date DateTime                    @default(now()) @db.Timestamp(6)
+  group_type    integration_group_enum
+  enabled       Boolean
+  details       Json?
+  integration   integration[]
+}
+
+model issue {
+  issue_id                                BigInt            @id(map: "issue_pk")
+  issue_type                              BigInt?
+  issue_description                       String?
+  auto_analyzed                           Boolean?          @default(false)
+  ignore_analyzer                         Boolean?          @default(false)
+  test_item_results                       test_item_results @relation(fields: [issue_id], references: [result_id], onDelete: Cascade, onUpdate: NoAction)
+  issue_type_issue_issue_typeToissue_type issue_type?       @relation("issue_issue_typeToissue_type", fields: [issue_type], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  issue_ticket                            issue_ticket[]
+
+  @@index([issue_type], map: "issue_it_idx")
+}
+
+model issue_group {
+  issue_group_id Int              @id(map: "issue_group_pk") @default(autoincrement()) @db.SmallInt
+  issue_group    issue_group_enum
+  issue_type     issue_type[]
+}
+
+model issue_ticket {
+  issue_id  BigInt
+  ticket_id BigInt
+  issue     issue  @relation(fields: [issue_id], references: [issue_id], onDelete: Cascade, onUpdate: NoAction)
+  ticket    ticket @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([issue_id, ticket_id], map: "issue_ticket_pk")
+}
+
+model issue_type {
+  id                                 BigInt               @id(map: "issue_type_pk") @default(autoincrement())
+  issue_group_id                     Int?                 @db.SmallInt
+  locator                            String               @unique @db.VarChar(64)
+  issue_name                         String               @db.VarChar(256)
+  abbreviation                       String               @db.VarChar(64)
+  hex_color                          String               @db.VarChar(7)
+  issue_issue_issue_typeToissue_type issue[]              @relation("issue_issue_typeToissue_type")
+  issue_group                        issue_group?         @relation(fields: [issue_group_id], references: [issue_group_id], onDelete: Cascade, onUpdate: NoAction)
+  issue_type_project                 issue_type_project[]
+
+  @@index([issue_group_id], map: "issue_type_group_idx")
+}
+
+model issue_type_project {
+  project_id    BigInt
+  issue_type_id BigInt
+  issue_type    issue_type @relation(fields: [issue_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  project       project    @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([project_id, issue_type_id], map: "issue_type_project_pk")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model item_attribute {
+  id        BigInt     @id(map: "item_attribute_pk") @default(autoincrement())
+  key       String?    @db.VarChar
+  value     String     @db.VarChar
+  item_id   BigInt?
+  launch_id BigInt?
+  system    Boolean?   @default(false)
+  test_item test_item? @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  launch    launch?    @relation(fields: [launch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([launch_id], map: "item_attr_launch_idx")
+  @@index([item_id], map: "item_attr_ti_idx")
+  @@index([key], map: "key_index")
+  @@index([value], map: "value_index")
+}
+
+model launch {
+  id                   BigInt           @id(map: "launch_pk") @default(autoincrement())
+  uuid                 String           @unique @db.VarChar(36)
+  project_id           BigInt
+  user_id              BigInt?
+  name                 String           @db.VarChar(256)
+  description          String?
+  start_time           DateTime         @db.Timestamp(6)
+  end_time             DateTime?        @db.Timestamp(6)
+  number               Int
+  last_modified        DateTime         @default(now()) @db.Timestamp(6)
+  mode                 launch_mode_enum
+  status               status_enum
+  has_retries          Boolean          @default(false)
+  rerun                Boolean          @default(false)
+  approximate_duration Float?           @default(0.0)
+  item_attribute       item_attribute[]
+  project              project          @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                users?           @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  log                  log[]
+  statistics           statistics[]
+  test_item            test_item[]
+
+  @@unique([name, number, project_id], map: "unq_name_number")
+  @@index([id], map: "id_index")
+  @@index([project_id, start_time], map: "launch_project_start_time_idx")
+  @@index([user_id], map: "launch_user_idx")
+}
+
+model launch_attribute_rules {
+  id             BigInt      @id(map: "launch_attribute_rules_pk") @default(autoincrement())
+  sender_case_id BigInt
+  key            String?     @db.VarChar(512)
+  value          String      @db.VarChar(512)
+  sender_case    sender_case @relation(fields: [sender_case_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sender_case_id], map: "l_attr_rl_send_case_idx")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model launch_names {
+  id                BigInt   @id @default(autoincrement())
+  sender_case_id BigInt?
+  launch_name    String?      @db.VarChar(256)
+  sender_case    sender_case? @relation(fields: [sender_case_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sender_case_id], map: "ln_send_case_idx")
+}
+
+model launch_number {
+  id          BigInt  @id(map: "launch_number_pk") @default(autoincrement())
+  project_id  BigInt
+  launch_name String  @db.VarChar(256)
+  number      Int
+  project     project @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([project_id, launch_name], map: "unq_project_name")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model log {
+  id            BigInt      @id(map: "log_pk") @default(autoincrement())
+  uuid          String      @db.VarChar(36)
+  log_time      DateTime    @db.Timestamp(6)
+  log_message   String
+  item_id       BigInt?
+  launch_id     BigInt?
+  last_modified DateTime    @db.Timestamp(6)
+  log_level     Int
+  attachment_id BigInt?
+  project_id    BigInt
+  cluster_id    BigInt?
+  attachment    attachment? @relation(fields: [attachment_id], references: [id], onUpdate: NoAction)
+  test_item     test_item?  @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  launch        launch?     @relation(fields: [launch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([attachment_id], map: "log_attach_id_idx")
+  @@index([cluster_id], map: "log_cluster_idx")
+  @@index([launch_id])
+  @@index([log_message(ops: raw("gin_trgm_ops"))], map: "log_message_trgm_idx", type: Gin)
+  @@index([project_id, log_time])
+  @@index([project_id], map: "log_project_idx")
+  @@index([item_id], map: "log_ti_idx")
+}
+
+model oauth_access_token {
+  id                BigInt  @id @default(autoincrement())
+  token_id          String? @db.VarChar(255)
+  token             Bytes?
+  authentication_id String? @db.VarChar(255)
+  username          String? @db.VarChar(255)
+  user_id           BigInt?
+  client_id         String? @db.VarChar(255)
+  authentication    Bytes?
+  refresh_token     String? @db.VarChar(255)
+  users             users?  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([token_id, user_id], map: "users_access_token_unique")
+  @@index([user_id], map: "oauth_at_user_idx")
+}
+
+model oauth_registration {
+  id                             String                           @id @db.VarChar(64)
+  client_id                      String                           @unique @db.VarChar(128)
+  client_secret                  String?                          @db.VarChar(256)
+  client_auth_method             String                           @db.VarChar(64)
+  auth_grant_type                String?                          @db.VarChar(64)
+  redirect_uri_template          String?                          @db.VarChar(256)
+  authorization_uri              String?                          @db.VarChar(256)
+  token_uri                      String?                          @db.VarChar(256)
+  user_info_endpoint_uri         String?                          @db.VarChar(256)
+  user_info_endpoint_name_attr   String?                          @db.VarChar(256)
+  jwk_set_uri                    String?                          @db.VarChar(256)
+  client_name                    String?                          @db.VarChar(128)
+  oauth_registration_restriction oauth_registration_restriction[]
+  oauth_registration_scope       oauth_registration_scope[]
+}
+
+model oauth_registration_restriction {
+  id                    Int                 @id(map: "oauth_registration_restriction_pk") @default(autoincrement())
+  oauth_registration_fk String?             @db.VarChar(128)
+  type                  String              @db.VarChar(256)
+  value                 String              @db.VarChar(256)
+  oauth_registration    oauth_registration? @relation(fields: [oauth_registration_fk], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([type, value, oauth_registration_fk], map: "oauth_registration_restriction_unique")
+}
+
+model oauth_registration_scope {
+  id                    Int                 @id(map: "oauth_registration_scope_pk") @default(autoincrement())
+  oauth_registration_fk String?             @db.VarChar(128)
+  scope                 String?             @db.VarChar(256)
+  oauth_registration    oauth_registration? @relation(fields: [oauth_registration_fk], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([scope, oauth_registration_fk], map: "oauth_registration_scope_unique")
+}
+
+model onboarding {
+  id             Int       @id(map: "onboarding_pk") @default(autoincrement()) @db.SmallInt
+  data           String?
+  page           String    @db.VarChar(50)
+  available_from DateTime? @db.Timestamp(6)
+  available_to   DateTime? @db.Timestamp(6)
+}
+
+model owned_entity {
+  id         BigInt     @id(map: "shareable_pk") @default(autoincrement())
+  owner      String?    @db.VarChar
+  project_id BigInt
+  dashboard  dashboard?
+  filter     filter?
+  project    project    @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shareable_entity_project_id_fkey")
+  widget     widget?
+
+  @@index([owner], map: "shared_entity_ownerx")
+  @@index([project_id], map: "shared_entity_project_idx")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model parameter {
+  id        BigInt     @id @default(autoincrement())
+  item_id   BigInt?
+  key       String     @db.VarChar
+  value     String     @db.VarChar
+  test_item test_item? @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([item_id], map: "parameter_ti_idx")
+}
+
+model pattern_template {
+  id                         BigInt                       @id(map: "pattern_template_pk") @default(autoincrement())
+  name                       String                       @db.VarChar
+  value                      String                       @db.VarChar
+  type                       String                       @db.VarChar
+  enabled                    Boolean
+  project_id                 BigInt
+  project                    project                      @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pattern_template_test_item pattern_template_test_item[]
+
+  @@unique([name, project_id], map: "unq_name_projectid")
+}
+
+model pattern_template_test_item {
+  pattern_id       BigInt
+  item_id          BigInt
+  test_item        test_item        @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  pattern_template pattern_template @relation(fields: [pattern_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([pattern_id, item_id], map: "pattern_item_unq")
+  @@index([item_id], map: "pattern_item_item_id_idx")
+}
+
+model project {
+  id                 BigInt               @id(map: "project_pk") @default(autoincrement())
+  name               String               @unique @db.VarChar
+  project_type       String               @db.VarChar
+  organization       String?              @db.VarChar
+  creation_date      DateTime             @default(now()) @db.Timestamp(6)
+  metadata           Json?
+  allocated_storage  BigInt               @default(0)
+  activity           activity[]
+  integration        integration[]
+  issue_type_project issue_type_project[]
+  launch             launch[]
+  launch_number      launch_number[]
+  owned_entity       owned_entity[]
+  pattern_template   pattern_template[]
+  project_attribute  project_attribute[]
+  project_user       project_user[]
+  sender_case        sender_case[]
+  user_creation_bid  user_creation_bid[]
+  user_preference    user_preference[]
+}
+
+model project_attribute {
+  attribute_id BigInt    @default(autoincrement())
+  value        String    @db.VarChar(256)
+  project_id   BigInt    @default(autoincrement())
+  attribute    attribute @relation(fields: [attribute_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  project      project   @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([attribute_id, project_id], map: "unique_attribute_per_project")
+}
+
+model project_user {
+  user_id      BigInt
+  project_id   BigInt
+  project_role project_role_enum
+  project      project           @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, project_id], map: "users_project_pk")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model recipients {
+  id             BigInt   @id @default(autoincrement())
+  sender_case_id BigInt?
+  recipient      String?      @db.VarChar(256)
+  sender_case    sender_case? @relation(fields: [sender_case_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sender_case_id], map: "rcpnt_send_case_idx")
+}
+
+model restore_password_bid {
+  uuid          String    @id(map: "restore_password_bid_pk") @db.VarChar
+  last_modified DateTime? @default(now()) @db.Timestamp(6)
+  email         String    @unique @db.VarChar
+}
+
+model schema_migrations {
+  version BigInt  @id
+  dirty   Boolean
+}
+
+model sender_case {
+  id                     BigInt                   @id(map: "sender_case_pk") @default(autoincrement())
+  send_case              String                   @db.VarChar(256)
+  project_id             BigInt                   @default(autoincrement())
+  enabled                Boolean                  @default(true)
+  attributes_operator    logical_operator_enum    @default(AND)
+  launch_attribute_rules launch_attribute_rules[]
+  launch_names           launch_names[]
+  recipients             recipients[]
+  project                project                  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "sender_case_project_idx")
+}
+
+model server_settings {
+  id    Int     @id(map: "server_settings_id") @default(autoincrement()) @db.SmallInt
+  key   String  @unique @db.VarChar
+  value String? @db.VarChar
+}
+
+model shedlock {
+  name       String   @id @db.VarChar(64)
+  lock_until DateTime @db.Timestamp(6)
+  locked_at  DateTime @db.Timestamp(6)
+  locked_by  String   @db.VarChar(255)
+}
+
+model stale_materialized_view {
+  id            BigInt   @id @default(autoincrement())
+  name          String   @unique @db.VarChar(128)
+  creation_date DateTime @db.Timestamp(6)
+
+  @@index([creation_date], map: "stale_mv_creation_date_idx")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model statistics {
+  s_id                BigInt            @id(map: "statistics_pk") @default(autoincrement())
+  s_counter           Int?              @default(0)
+  launch_id           BigInt?
+  item_id             BigInt?
+  statistics_field_id BigInt?
+  test_item           test_item?        @relation(fields: [item_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  launch              launch?           @relation(fields: [launch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  statistics_field    statistics_field? @relation(fields: [statistics_field_id], references: [sf_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([statistics_field_id, item_id], map: "unique_stats_item")
+  @@unique([statistics_field_id, launch_id], map: "unique_stats_launch")
+  @@index([launch_id], map: "statistics_launch_idx")
+  @@index([item_id], map: "statistics_ti_idx")
+}
+
+model statistics_field {
+  sf_id      BigInt       @id(map: "statistics_field_pk") @default(autoincrement())
+  name       String       @unique @db.VarChar(256)
+  statistics statistics[]
+}
+
+model test_item {
+  item_id                                        BigInt                       @id(map: "test_item_pk") @default(autoincrement())
+  uuid                                           String                       @unique @db.VarChar(36)
+  name                                           String?                      @db.VarChar(1024)
+  code_ref                                       String?                      @db.VarChar
+  type                                           test_item_type_enum
+  start_time                                     DateTime                     @db.Timestamp(6)
+  description                                    String?
+  last_modified                                  DateTime                     @db.Timestamp(6)
+  path                                           Unsupported("ltree")?
+  unique_id                                      String?                      @db.VarChar(1024)
+  test_case_id                                   String?                      @db.VarChar(1024)
+  has_children                                   Boolean?                     @default(false)
+  has_retries                                    Boolean?                     @default(false)
+  has_stats                                      Boolean?                     @default(true)
+  parent_id                                      BigInt?
+  retry_of                                       BigInt?
+  launch_id                                      BigInt?
+  test_case_hash                                 Int
+  item_attribute                                 item_attribute[]
+  log                                            log[]
+  parameter                                      parameter[]
+  pattern_template_test_item                     pattern_template_test_item[]
+  statistics                                     statistics[]
+  launch                                         launch?                      @relation(fields: [launch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  test_item_test_item_parent_idTotest_item       test_item?                   @relation("test_item_parent_idTotest_item", fields: [parent_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  other_test_item_test_item_parent_idTotest_item test_item[]                  @relation("test_item_parent_idTotest_item")
+  test_item_test_item_retry_ofTotest_item        test_item?                   @relation("test_item_retry_ofTotest_item", fields: [retry_of], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+  other_test_item_test_item_retry_ofTotest_item  test_item[]                  @relation("test_item_retry_ofTotest_item")
+  test_item_results                              test_item_results?
+
+  @@index([test_case_id, launch_id], map: "item_test_case_id_launch_id_idx")
+  @@index([path], map: "path_gist_idx", type: Gist)
+  @@index([path], map: "path_idx")
+  @@index([start_time], map: "start_time_index")
+  @@index([test_case_hash, launch_id], map: "test_case_hash_launch_id_idx")
+  @@index([unique_id, launch_id])
+  @@index([launch_id], map: "ti_launch_idx")
+  @@index([parent_id], map: "ti_parent_idx")
+  @@index([retry_of], map: "ti_retry_of_idx")
+}
+
+model test_item_results {
+  result_id BigInt      @id(map: "test_item_results_pk")
+  status    status_enum
+  end_time  DateTime?   @db.Timestamp(6)
+  duration  Float?
+  issue     issue?
+  test_item test_item   @relation(fields: [result_id], references: [item_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model ticket {
+  id           BigInt         @id(map: "ticket_pk") @default(autoincrement())
+  ticket_id    String         @db.VarChar(256)
+  submitter    String         @db.VarChar
+  submit_date  DateTime       @default(now()) @db.Timestamp(6)
+  bts_url      String         @db.VarChar(1024)
+  bts_project  String         @db.VarChar(1024)
+  url          String         @db.VarChar(1024)
+  plugin_name  String?        @db.VarChar(128)
+  issue_ticket issue_ticket[]
+
+  @@index([ticket_id], map: "ticket_id_idx")
+  @@index([submitter])
+}
+
+model user_creation_bid {
+  uuid               String    @id(map: "user_creation_bid_pk") @db.VarChar
+  last_modified      DateTime? @default(now()) @db.Timestamp(6)
+  email              String    @db.VarChar
+  default_project_id BigInt?
+  role               String    @db.VarChar
+  inviting_user_id   BigInt?
+  project            project?  @relation(fields: [default_project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users              users?    @relation(fields: [inviting_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([default_project_id], map: "user_bid_project_idx")
+}
+
+model user_preference {
+  id         BigInt  @id(map: "user_preference_pk") @default(autoincrement())
+  project_id BigInt
+  user_id    BigInt
+  filter_id  BigInt
+  filter     filter  @relation(fields: [filter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  project    project @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([project_id, user_id, filter_id], map: "user_preference_uq")
+}
+
+model users {
+  id                   BigInt               @id(map: "users_pk") @default(autoincrement())
+  login                String               @unique @db.VarChar
+  password             String?              @db.VarChar
+  email                String               @unique @db.VarChar
+  attachment           String?              @db.VarChar
+  attachment_thumbnail String?              @db.VarChar
+  role                 String               @db.VarChar
+  type                 String               @db.VarChar
+  expired              Boolean
+  full_name            String?              @db.VarChar
+  metadata             Json?
+  api_keys             api_keys[]
+  launch               launch[]
+  oauth_access_token   oauth_access_token[]
+  project_user         project_user[]
+  user_creation_bid    user_creation_bid[]
+  user_preference      user_preference[]
+}
+
+model widget {
+  id               BigInt             @id
+  name             String             @db.VarChar
+  description      String?            @db.VarChar
+  widget_type      String             @db.VarChar
+  items_count      Int?               @db.SmallInt
+  widget_options   Json?
+  content_field    content_field[]
+  dashboard_widget dashboard_widget[]
+  owned_entity     owned_entity       @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "widget_id_fk")
+  widget_filter    widget_filter[]
+}
+
+model widget_filter {
+  widget_id BigInt
+  filter_id BigInt
+  filter    filter @relation(fields: [filter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  widget    widget @relation(fields: [widget_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([widget_id, filter_id], map: "widget_filter_pk")
+}
+
+enum access_token_type_enum {
+  OAUTH
+  NTLM
+  APIKEY
+  BASIC
+}
+
+enum auth_type_enum {
+  OAUTH
+  NTLM
+  APIKEY
+  BASIC
+}
+
+enum filter_condition_enum {
+  EQUALS
+  NOT_EQUALS
+  CONTAINS
+  EXISTS
+  IN
+  HAS
+  GREATER_THAN
+  GREATER_THAN_OR_EQUALS
+  LOWER_THAN
+  LOWER_THAN_OR_EQUALS
+  BETWEEN
+  ANY
+}
+
+enum integration_auth_flow_enum {
+  OAUTH
+  BASIC
+  TOKEN
+  FORM
+  LDAP
+}
+
+enum integration_group_enum {
+  BTS
+  NOTIFICATION
+  AUTH
+  OTHER
+}
+
+enum issue_group_enum {
+  PRODUCT_BUG
+  AUTOMATION_BUG
+  SYSTEM_ISSUE
+  TO_INVESTIGATE
+  NO_DEFECT
+}
+
+enum launch_mode_enum {
+  DEFAULT
+  DEBUG
+}
+
+enum logical_operator_enum {
+  AND
+  OR
+}
+
+enum password_encoder_type {
+  PLAIN
+  SHA
+  LDAP_SHA
+  MD4
+  MD5
+}
+
+enum project_role_enum {
+  OPERATOR
+  CUSTOMER
+  MEMBER
+  PROJECT_MANAGER
+}
+
+enum sort_direction_enum {
+  ASC
+  DESC
+}
+
+enum status_enum {
+  CANCELLED
+  FAILED
+  INTERRUPTED
+  IN_PROGRESS
+  PASSED
+  RESETED
+  SKIPPED
+  STOPPED
+  INFO
+  WARN
+}
+
+enum test_item_type_enum {
+  AFTER_CLASS
+  AFTER_GROUPS
+  AFTER_METHOD
+  AFTER_SUITE
+  AFTER_TEST
+  BEFORE_CLASS
+  BEFORE_GROUPS
+  BEFORE_METHOD
+  BEFORE_SUITE
+  BEFORE_TEST
+  SCENARIO
+  STEP
+  STORY
+  SUITE
+  TEST
+}
