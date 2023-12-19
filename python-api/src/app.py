@@ -13,6 +13,8 @@ dotenv.load_dotenv()
 
 from flask import Flask, request, jsonify
 
+# from flask_lambda import FlaskLambda
+
 app = Flask(__name__)
 client = app.test_client()
 
@@ -68,10 +70,6 @@ def get_test_items():
 @app.route("/")
 def index():
     return "Hello, World!"
-
-
-def handler(event, context):
-    return awsgi.response(app, event, context)
 
 
 # def get_items

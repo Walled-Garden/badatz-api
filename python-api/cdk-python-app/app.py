@@ -35,66 +35,76 @@ from aws_cdk import (
     aws_apigateway as _apigw,
     # aws_apigateway,
 )
+import aws_cdk as cdk
 
 
 class ApiCorsLambdaStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # base_lambda = _lambda.Function(
+        # badatz_lambda = _lambda.Function(
         #     self,
         #     "BadatzApiLambda",
         #     handler="lambda-handler.handler",
         #     runtime=_lambda.Runtime.PYTHON_3_7,
         #     code=_lambda.Code.from_asset("../src/lambda"),
         # )
-        base_lambda = _lambda.Function(
+        badatz_lambda = _lambda.Function(
             self,
-            "BadatzApiLambda",
-            handler="lambda.handler",
+            "badatz_api_lambda",
+            handler="lambda_handler.handler",
             runtime=_lambda.Runtime.PYTHON_3_10,
             code=_lambda.Code.from_asset(
                 "../src",
+                bundling=cdk.BundlingOptions(
+                    image=_lambda.Runtime.PYTHON_3_10.bundling_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                    ],
+                ),
             ),
         )
+        _apigw.LambdaRestApi(self, "badatz_api_lambda_rest", handler=badatz_lambda)
 
-        base_api = _apigw.RestApi(
-            self,
-            "BadatzApiGatewayWithCors",
-            rest_api_name="BadatzApiGatewayWithCors",
-        )
-
-        example_entity = base_api.root.add_resource(
-            "example",
-            default_cors_preflight_options=_apigw.CorsOptions(
-                allow_methods=["GET", "OPTIONS", "POST"],
-                allow_origins=_apigw.Cors.ALL_ORIGINS,
-            ),
-        )
-        example_entity_lambda_integration = _apigw.LambdaIntegration(
-            base_lambda,
-            proxy=False,
-            integration_responses=[
-                _apigw.IntegrationResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": "'*'"
-                    },
-                )
-            ],
-        )
-        example_entity.add_method(
-            "GET",
-            example_entity_lambda_integration,
-            method_responses=[
-                _apigw.MethodResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": True
-                    },
-                )
-            ],
-        )
+        # base_api = _apigw.RestApi(
+        #     self,
+        #     "BadatzApiGatewayWithCors",
+        #     rest_api_name="BadatzApiGatewayWithCors",
+        # )
+        #
+        # example_entity = base_api.root.add_resource(
+        #     "example",
+        #     default_cors_preflight_options=_apigw.CorsOptions(
+        #         allow_methods=["GET", "OPTIONS", "POST"],
+        #         allow_origins=_apigw.Cors.ALL_ORIGINS,
+        #     ),
+        # )
+        # example_entity_lambda_integration = _apigw.LambdaIntegration(
+        #     badatz_lambda,
+        #     proxy=False,
+        #     integration_responses=[
+        #         _apigw.IntegrationResponse(
+        #             status_code="200",
+        #             response_parameters={
+        #                 "method.response.header.Access-Control-Allow-Origin": "'*'"
+        #             },
+        #         )
+        #     ],
+        # )
+        # example_entity.add_method(
+        #     "GET",
+        #     example_entity_lambda_integration,
+        #     method_responses=[
+        #         _apigw.MethodResponse(
+        #             status_code="200",
+        #             response_parameters={
+        #                 "method.response.header.Access-Control-Allow-Origin": True
+        #             },
+        #         )
+        #     ],
+        # )
 
 
 app = App()
