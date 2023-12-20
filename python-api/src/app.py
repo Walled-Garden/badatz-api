@@ -1,14 +1,15 @@
+from pathlib import Path
 from typing import TypedDict
 
 import psycopg2
 from psycopg2.extras import DictCursor
 
-import awsgi
-
-
 import os
 import dotenv
+import sys
 
+
+sys.path.append(str((Path(__file__).parent / "deps").absolute()))
 dotenv.load_dotenv()
 
 from flask import Flask, request, jsonify
@@ -34,7 +35,6 @@ class JsonData(TypedDict):
 @app.route("/test_items", methods=["POST"])
 def get_test_items():
     json_data: JsonData = request.json
-
     if "launch_id" not in json_data:
         return jsonify({"error": "'launch_id' is required in body"})
 
@@ -64,12 +64,35 @@ def get_test_items():
     rows = cursor.fetchall()
     data = [dict(row) for row in rows]
 
-    return jsonify(data)
+    return jsonify(
+        {
+            "body": data,
+            "statusCode": 200,
+        }
+    )
 
 
 @app.route("/")
 def index():
     return "Hello, World!"
+
+
+@app.route("/get_env")
+def get_env():
+    return jsonify(
+        {
+            "db_host": db_host,
+            "db_name": db_name,
+            "db_user": db_user,
+            "db_password": db_password,
+            "db_port": db_port,
+        }
+    )
+
+
+@app.route("/echo", methods=["POST"])
+def echo():
+    return jsonify({"body": request.json})
 
 
 # def get_items
@@ -108,3 +131,4 @@ def index():
 if __name__ == "__main__":
     # lambda_handler(None, None)
     app.run(debug=True)
+    # print(jsonify("route2"))

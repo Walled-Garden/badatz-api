@@ -33,22 +33,20 @@ from aws_cdk import (
     Stack,
     aws_lambda as _lambda,
     aws_apigateway as _apigw,
-    # aws_apigateway,
+    aws_ec2 as _ec2,
+    aws_iam as iam,
 )
 import aws_cdk as cdk
+
+BADATZ_VPC_ID = "vpc-000442496728ac699"
+# BADATZ_APIGW_VPCE_ID = "vpce-0f0fed9484d72e5db"
+ALLOW_RDS_SG_ID = "sg-0d9de38b677cdce5b"
 
 
 class ApiCorsLambdaStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # badatz_lambda = _lambda.Function(
-        #     self,
-        #     "BadatzApiLambda",
-        #     handler="lambda-handler.handler",
-        #     runtime=_lambda.Runtime.PYTHON_3_7,
-        #     code=_lambda.Code.from_asset("../src/lambda"),
-        # )
         badatz_lambda = _lambda.Function(
             self,
             "badatz_api_lambda",
@@ -66,47 +64,74 @@ class ApiCorsLambdaStack(Stack):
                 ),
             ),
         )
-        _apigw.LambdaRestApi(self, "badatz_api_lambda_rest", handler=badatz_lambda)
 
-        # base_api = _apigw.RestApi(
-        #     self,
-        #     "BadatzApiGatewayWithCors",
-        #     rest_api_name="BadatzApiGatewayWithCors",
+        # # Reference an existing VPCE by providing its ID
+        # apigw_vpce = _ec2.InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
+        #     self, "apigw_vpce", vpc_endpoint_id=BADATZ_APIGW_VPCE_ID, port=443
         # )
+
+        # # create a new VPCE
+        apigw_vpce = _ec2.InterfaceVpcEndpoint(
+            self,
+            "apigw_vpce",
+            vpc=_ec2.Vpc.from_lookup(self, "badatz_vpc", vpc_id=BADATZ_VPC_ID),
+            service=_ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
+            private_dns_enabled=True,
+            subnets=_ec2.SubnetSelection(subnet_type=_ec2.SubnetType.PRIVATE_ISOLATED),
+            security_groups=[
+                _ec2.SecurityGroup.from_security_group_id(
+                    self, "apigw_vpce_sg", security_group_id=ALLOW_RDS_SG_ID
+                )
+            ],
+        )
+
+        apigw = _apigw.LambdaRestApi(
+            self,
+            "badatz_api_lambda_rest",
+            handler=badatz_lambda,
+            integration_options=_apigw.LambdaIntegrationOptions(
+                timeout=cdk.Duration.seconds(29)
+            ),
+            endpoint_configuration=_apigw.EndpointConfiguration(
+                types=[_apigw.EndpointType.PRIVATE], vpc_endpoints=[apigw_vpce]
+            ),
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        actions=["execute-api:Invoke"],
+                        resources=["execute-api:/*/*/*"],
+                        principals=[iam.AnyPrincipal()],
+                        conditions={
+                            "StringEquals": {
+                                "aws:sourceVpce": apigw_vpce.vpc_endpoint_id,
+                            }
+                        },
+                    )
+                ]
+            ),
+        )
+        # apigw.add_resource_permission(
+        #     principal=apigateway.ArnPrincipal("arn:aws:iam::123456789012:role/MyRole"),
+        #     resource_arn=api.arn_for_execute_api(),
+        #     actions=["execute-api:Invoke"],
+        # )
+
+        # nlb = elbv2.NetworkLoadBalancer(self, "NLB", vpc=vpc)
+        # link = _apigw.VpcLink(self, "link", targets=[nlb])
         #
-        # example_entity = base_api.root.add_resource(
-        #     "example",
-        #     default_cors_preflight_options=_apigw.CorsOptions(
-        #         allow_methods=["GET", "OPTIONS", "POST"],
-        #         allow_origins=_apigw.Cors.ALL_ORIGINS,
+        # integration = _apigw.Integration(
+        #     type=_apigw.IntegrationType.HTTP_PROXY,
+        #     integration_http_method="ANY",
+        #     options=_apigw.IntegrationOptions(
+        #         connection_type=_apigw.ConnectionType.VPC_LINK, vpc_link=link
         #     ),
-        # )
-        # example_entity_lambda_integration = _apigw.LambdaIntegration(
-        #     badatz_lambda,
-        #     proxy=False,
-        #     integration_responses=[
-        #         _apigw.IntegrationResponse(
-        #             status_code="200",
-        #             response_parameters={
-        #                 "method.response.header.Access-Control-Allow-Origin": "'*'"
-        #             },
-        #         )
-        #     ],
-        # )
-        # example_entity.add_method(
-        #     "GET",
-        #     example_entity_lambda_integration,
-        #     method_responses=[
-        #         _apigw.MethodResponse(
-        #             status_code="200",
-        #             response_parameters={
-        #                 "method.response.header.Access-Control-Allow-Origin": True
-        #             },
-        #         )
-        #     ],
         # )
 
 
 app = App()
-ApiCorsLambdaStack(app, "BadatzApiCorsLambdaStack")
+ApiCorsLambdaStack(
+    app,
+    "badatz-api-lambda-stack",
+    env={"account": "590781477698", "region": "us-east-1"},
+)
 app.synth()
