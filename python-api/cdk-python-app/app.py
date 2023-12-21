@@ -35,18 +35,26 @@ from aws_cdk import (
     aws_apigateway as _apigw,
     aws_ec2 as _ec2,
     aws_iam as iam,
+    aws_route53 as route53,
+    aws_route53_targets as route53_targets,
+    aws_certificatemanager as acm,
 )
 import aws_cdk as cdk
 
 BADATZ_VPC_ID = "vpc-000442496728ac699"
-# BADATZ_APIGW_VPCE_ID = "vpce-0f0fed9484d72e5db"
 ALLOW_RDS_SG_ID = "sg-0d9de38b677cdce5b"
+INSIGHTXC_HOSTED_ZONE_ID = "Z03545982I5FRH4AR48BO"
 
 
 class ApiCorsLambdaStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        # Reference the existing Badatz VPC
+        badatz_vpc = _ec2.Vpc.from_lookup(self, "badatz_vpc", vpc_id=BADATZ_VPC_ID)
+
+        # Create a new Lambda function, within Badatz VPC
+        # The Lambda function uses the flask app from the ../src directory as the handler
         badatz_lambda = _lambda.Function(
             self,
             "badatz_api_lambda",
@@ -63,29 +71,30 @@ class ApiCorsLambdaStack(Stack):
                     ],
                 ),
             ),
+            vpc=badatz_vpc,
         )
 
-        # # Reference an existing VPCE by providing its ID
-        # apigw_vpce = _ec2.InterfaceVpcEndpoint.from_interface_vpc_endpoint_attributes(
-        #     self, "apigw_vpce", vpc_endpoint_id=BADATZ_APIGW_VPCE_ID, port=443
-        # )
-
-        # # create a new VPCE
+        # create a new API-GW VPCE
         apigw_vpce = _ec2.InterfaceVpcEndpoint(
             self,
             "apigw_vpce",
-            vpc=_ec2.Vpc.from_lookup(self, "badatz_vpc", vpc_id=BADATZ_VPC_ID),
+            vpc=badatz_vpc,
             service=_ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             private_dns_enabled=True,
             subnets=_ec2.SubnetSelection(subnet_type=_ec2.SubnetType.PRIVATE_ISOLATED),
             security_groups=[
                 _ec2.SecurityGroup.from_security_group_id(
-                    self, "apigw_vpce_sg", security_group_id=ALLOW_RDS_SG_ID
+                    self,
+                    "apigw_vpce_sg",
+                    # reference the existing security group that allows access to the RDS
+                    security_group_id=ALLOW_RDS_SG_ID,
                 )
             ],
         )
 
-        apigw = _apigw.LambdaRestApi(
+        # create a new API Gateway, with the Lambda function as the backend
+        # the API Gateway would proxy all requests to the Lambda function
+        badatz_api = _apigw.LambdaRestApi(
             self,
             "badatz_api_lambda_rest",
             handler=badatz_lambda,
@@ -95,22 +104,87 @@ class ApiCorsLambdaStack(Stack):
             endpoint_configuration=_apigw.EndpointConfiguration(
                 types=[_apigw.EndpointType.PRIVATE], vpc_endpoints=[apigw_vpce]
             ),
-            policy=iam.PolicyDocument(
-                statements=[
-                    iam.PolicyStatement(
-                        actions=["execute-api:Invoke"],
-                        resources=["execute-api:/*/*/*"],
-                        principals=[iam.AnyPrincipal()],
-                        conditions={
-                            "StringEquals": {
-                                "aws:sourceVpce": apigw_vpce.vpc_endpoint_id,
-                            }
+            # explicitly deny all requests that are not coming from the VPC endpoint
+            # taken from here:
+            # https://docs.aws.amazon.com/apigateway/latest/developerguide/private-api-tutorial.html#private-api-tutorial-attach-resource-policy
+            policy=iam.PolicyDocument.from_json(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Deny",
+                            "Principal": "*",
+                            "Action": "execute-api:Invoke",
+                            "Resource": "execute-api:/*",
+                            "Condition": {
+                                "StringNotEquals": {
+                                    "aws:sourceVpce": apigw_vpce.vpc_endpoint_id
+                                }
+                            },
                         },
-                    )
-                ]
+                        {
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": "execute-api:Invoke",
+                            "Resource": "execute-api:/*",
+                        },
+                    ],
+                }
             ),
+            domain_name=_apigw.DomainNameOptions(
+                domain_name="rp-api.insightxc.com",
+                certificate=acm.Certificate.from_certificate_arn(
+                    self,
+                    "insightxc_cert",
+                    certificate_arn="arn:aws:acm:us-east-1:590781477698:certificate/2140f7f3-e699-43f6-9518-fad14c04f100",
+                ),
+            ),
+            # # old: explicit allow
+            # policy=iam.PolicyDocument(
+            #     statements=[
+            #         iam.PolicyStatement(
+            #             actions=["execute-api:Invoke"],
+            #             resources=["execute-api:/*/*/*"],
+            #             principals=[iam.AnyPrincipal()],
+            #             conditions={
+            #                 "StringEquals": {
+            #                     "aws:sourceVpce": apigw_vpce.vpc_endpoint_id,
+            #                 }
+            #             },
+            #         )
+            #     ]
+            # ),
         )
-        # apigw.add_resource_permission(
+
+        insightxc_hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+            self,
+            "insightxc_hosted_zone",
+            hosted_zone_id=INSIGHTXC_HOSTED_ZONE_ID,
+            zone_name="insightxc.com",
+        )
+
+        route53.ARecord(
+            self,
+            "rp-api.insightxc.com-to-badatz_api",
+            zone=insightxc_hosted_zone,
+            target=route53.RecordTarget.from_alias(route53_targets.ApiGateway(badatz_api)),
+        )
+
+        # route53.ARecord(
+        #     self,
+        #     "insightxc_api_dns",
+        #     zone=insightxc_hosted_zone,
+        #     target=route53.RecordTarget.from_alias(
+        #         route53_targets.ApiGatewayDomain(badatz_api.domain_name)
+        #     ),
+        # )
+
+        # todo:
+        #  - add domain name to the API GW
+        #  - add route53 alias record to the API GW custom domain
+        #
+
+        # badatz_api.add_resource_permission(
         #     principal=apigateway.ArnPrincipal("arn:aws:iam::123456789012:role/MyRole"),
         #     resource_arn=api.arn_for_execute_api(),
         #     actions=["execute-api:Invoke"],
