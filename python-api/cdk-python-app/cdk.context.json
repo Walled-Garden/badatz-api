@@ -1,0 +1,85 @@
+{
+  "vpc-provider:account=590781477698:filter.vpc-id=vpc-000442496728ac699:region=us-east-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-000442496728ac699",
+    "vpcCidrBlock": "10.0.0.0/16",
+    "ownerAccountId": "590781477698",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "Isolated",
+        "type": "Isolated",
+        "subnets": [
+          {
+            "subnetId": "subnet-05b3d3873e1492352",
+            "cidr": "10.0.5.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-0661d67c9b6243fd6"
+          },
+          {
+            "subnetId": "subnet-0ca05b92ba73b7bfc",
+            "cidr": "10.0.2.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-0661d67c9b6243fd6"
+          },
+          {
+            "subnetId": "subnet-0b164baf36c8f374b",
+            "cidr": "10.0.6.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-02c974619850bc7d7"
+          },
+          {
+            "subnetId": "subnet-0e9d6809a7b2f8f60",
+            "cidr": "10.0.7.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-02c974619850bc7d7"
+          },
+          {
+            "subnetId": "subnet-0ee139fa0bcd1e1d5",
+            "cidr": "10.0.3.0/24",
+            "availabilityZone": "us-east-1b",
+            "routeTableId": "rtb-0a9baf400620a394a"
+          }
+        ]
+      },
+      {
+        "name": "Public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-084fee3c307f7fc69",
+            "cidr": "10.0.0.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-08b1dc3cc5a0011cf"
+          },
+          {
+            "subnetId": "subnet-0644e01b9b34af13b",
+            "cidr": "10.0.1.0/24",
+            "availabilityZone": "us-east-1b",
+            "routeTableId": "rtb-08b1dc3cc5a0011cf"
+          }
+        ]
+      }
+    ]
+  },
+  "load-balancer:account=590781477698:loadBalancerArn=arn$:aws$:elasticloadbalancing$:us-east-1$:590781477698$:loadbalancer/app/badatz-internal-alb/1d3fb2c2a2df313e:loadBalancerType=application:region=us-east-1": {
+    "loadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:590781477698:loadbalancer/app/badatz-internal-alb/1d3fb2c2a2df313e",
+    "loadBalancerCanonicalHostedZoneId": "Z35SXDOTRQ7X7K",
+    "loadBalancerDnsName": "internal-badatz-internal-alb-137286542.us-east-1.elb.amazonaws.com",
+    "vpcId": "vpc-000442496728ac699",
+    "securityGroupIds": [
+      "sg-07b42cf792b3ef48f"
+    ],
+    "ipAddressType": "ipv4"
+  },
+  "load-balancer-listener:account=590781477698:listenerPort=443:listenerProtocol=HTTPS:loadBalancerArn=arn$:aws$:elasticloadbalancing$:us-east-1$:590781477698$:loadbalancer/app/badatz-internal-alb/1d3fb2c2a2df313e:loadBalancerType=application:region=us-east-1": {
+    "listenerArn": "arn:aws:elasticloadbalancing:us-east-1:590781477698:listener/app/badatz-internal-alb/1d3fb2c2a2df313e/ab9988b8f0a79087",
+    "listenerPort": 443,
+    "securityGroupIds": [
+      "sg-07b42cf792b3ef48f"
+    ]
+  },
+  "security-group:account=590781477698:region=us-east-1:securityGroupId=sg-07b42cf792b3ef48f": {
+    "securityGroupId": "sg-07b42cf792b3ef48f",
+    "allowAllOutbound": false
+  }
+}
