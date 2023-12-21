@@ -167,7 +167,9 @@ class ApiCorsLambdaStack(Stack):
             self,
             "rp-api.insightxc.com-to-badatz_api",
             zone=insightxc_hosted_zone,
-            target=route53.RecordTarget.from_alias(route53_targets.ApiGateway(badatz_api)),
+            target=route53.RecordTarget.from_alias(
+                route53_targets.ApiGateway(badatz_api)
+            ),
         )
 
         # route53.ARecord(
