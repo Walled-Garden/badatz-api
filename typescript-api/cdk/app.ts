@@ -6,6 +6,7 @@ import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as elbTargets from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
 
 const BADATZ_VPC_ID = "vpc-000442496728ac699";
@@ -27,7 +28,7 @@ class ApiCorsLambdaStack extends Stack {
     // Create a new Lambda function, within Badatz VPC
     // The Lambda function uses the flask app from the ../src directory as the handler
     const badatzLambda = new lambda.Function(this, "badatz_api_lambda", {
-      handler: "lambda_handler.handler",
+      handler: "src/handler.handler",
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("../app", {
         // bundling: {
@@ -41,6 +42,11 @@ class ApiCorsLambdaStack extends Stack {
       }),
       timeout: cdk.Duration.seconds(60),
       vpc: badatzVpc,
+    });
+
+    // just so testing locally with `sam local start-api` will work. DO NOT USE IN PRODUCTION
+    new apigateway.LambdaRestApi(this, "testAPI", {
+      handler: badatzLambda,
     });
 
     // use ALB instead of API Gateway to route to the lambda directly

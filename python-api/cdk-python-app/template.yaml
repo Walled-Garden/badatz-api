@@ -38,13 +38,14 @@ Resources:
     Properties:
       Code:
         S3Bucket: cdk-hnb659fds-assets-590781477698-us-east-1
-        S3Key: 8f534d04fd3277d218ce9265c41140a85af10f3097b5a568d973eb64a9b317dd.zip
+        S3Key: d82f269ed7f103179679786d906101e244b90c6852ba4d87146f4ba389fe000c.zip
       Handler: lambda_handler.handler
       Role:
         Fn::GetAtt:
           - badatzapilambdaServiceRole882253AB
           - Arn
       Runtime: python3.10
+      Timeout: 60
       VpcConfig:
         SecurityGroupIds:
           - Fn::GetAtt:
@@ -60,61 +61,27 @@ Resources:
       - badatzapilambdaServiceRole882253AB
     Metadata:
       aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda/Resource
-      aws:asset:path: /home/tmax/development/badatz-monorepo/badatz-api/python-api/cdk-python-app/cdk.out/asset.8f534d04fd3277d218ce9265c41140a85af10f3097b5a568d973eb64a9b317dd
+      aws:asset:path: /home/tmax/development/badatz-monorepo/badatz-api/python-api/cdk-python-app/cdk.out/asset.d82f269ed7f103179679786d906101e244b90c6852ba4d87146f4ba389fe000c
       aws:asset:is-bundled: true
       aws:asset:property: Code
-  apigwvpcesgfrom100001644300686146:
-    Type: AWS::EC2::SecurityGroupIngress
+  badatzapilambdaInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYDCACCDC8:
+    Type: AWS::Lambda::Permission
     Properties:
-      CidrIp: 10.0.0.0/16
-      Description: from 10.0.0.0/16:443
-      FromPort: 443
-      GroupId: sg-0d9de38b677cdce5b
-      IpProtocol: tcp
-      ToPort: 443
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - badatzapilambdaA540EC2F
+          - Arn
+      Principal: elasticloadbalancing.amazonaws.com
     Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/apigw_vpce_sg/from 10.0.0.0_16:443
-  apigwvpceB3F3D746:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - sg-0d9de38b677cdce5b
-      ServiceName: com.amazonaws.us-east-1.execute-api
-      SubnetIds:
-        - subnet-05b3d3873e1492352
-        - subnet-0ee139fa0bcd1e1d5
-      VpcEndpointType: Interface
-      VpcId: vpc-000442496728ac699
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/apigw_vpce/Resource
+      aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda/Invoke2UTWxhlfyqbT5FTn--5jvgbLgj+FfJwzswGk55DU1H--Y=
   badatzapilambdarest9612D1D6:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      EndpointConfiguration:
-        Types:
-          - PRIVATE
-        VpcEndpointIds:
-          - Ref: apigwvpceB3F3D746
       Name: badatz_api_lambda_rest
-      Policy:
-        Statement:
-          - Action: execute-api:Invoke
-            Condition:
-              StringNotEquals:
-                aws:sourceVpce:
-                  Ref: apigwvpceB3F3D746
-            Effect: Deny
-            Principal: "*"
-            Resource: execute-api:/*
-          - Action: execute-api:Invoke
-            Effect: Allow
-            Principal: "*"
-            Resource: execute-api:/*
-        Version: "2012-10-17"
     Metadata:
       aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda_rest/Resource
-  badatzapilambdarestDeployment89F14D6Dcc6894773b0e9e38286a6b316ccfd632:
+  badatzapilambdarestDeployment89F14D6D4a354b9b8e16a8f389fb5f7b84b9f6b3:
     Type: AWS::ApiGateway::Deployment
     Properties:
       Description: Automatically created by the RestApi construct
@@ -130,33 +97,12 @@ Resources:
     Type: AWS::ApiGateway::Stage
     Properties:
       DeploymentId:
-        Ref: badatzapilambdarestDeployment89F14D6Dcc6894773b0e9e38286a6b316ccfd632
+        Ref: badatzapilambdarestDeployment89F14D6D4a354b9b8e16a8f389fb5f7b84b9f6b3
       RestApiId:
         Ref: badatzapilambdarest9612D1D6
       StageName: prod
     Metadata:
       aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda_rest/DeploymentStage.prod/Resource
-  badatzapilambdarestCustomDomainFEAE681C:
-    Type: AWS::ApiGateway::DomainName
-    Properties:
-      DomainName: rp-api.insightxc.com
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: arn:aws:acm:us-east-1:590781477698:certificate/2140f7f3-e699-43f6-9518-fad14c04f100
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda_rest/CustomDomain/Resource
-  badatzapilambdarestCustomDomainMapbadatzapilambdastackbadatzapilambdarest8CF65B3869CE5774:
-    Type: AWS::ApiGateway::BasePathMapping
-    Properties:
-      DomainName:
-        Ref: badatzapilambdarestCustomDomainFEAE681C
-      RestApiId:
-        Ref: badatzapilambdarest9612D1D6
-      Stage:
-        Ref: badatzapilambdarestDeploymentStageprod633615FB
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda_rest/CustomDomain/Map:--=>badatzapilambdastackbadatzapilambdarest8CF65B38/Resource
   badatzapilambdarestproxy3ED30D2C:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -212,7 +158,6 @@ Resources:
       HttpMethod: ANY
       Integration:
         IntegrationHttpMethod: POST
-        TimeoutInMillis: 29000
         Type: AWS_PROXY
         Uri:
           Fn::Join:
@@ -271,7 +216,6 @@ Resources:
       HttpMethod: ANY
       Integration:
         IntegrationHttpMethod: POST
-        TimeoutInMillis: 29000
         Type: AWS_PROXY
         Uri:
           Fn::Join:
@@ -289,206 +233,39 @@ Resources:
         Ref: badatzapilambdarest9612D1D6
     Metadata:
       aws:cdk:path: badatz-api-lambda-stack/badatz_api_lambda_rest/Default/ANY/Resource
-  publicapi08C5CDE1:
-    Type: AWS::ApiGateway::RestApi
+  ALBListenerbadatzapiFCDFA676:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
-      Name: public_api
+      Actions:
+        - TargetGroupArn:
+            Ref: badatzapitgC58E3340
+          Type: forward
+      Conditions:
+        - Field: host-header
+          HostHeaderConfig:
+            Values:
+              - rp.api.insightxc.com
+      ListenerArn: arn:aws:elasticloadbalancing:us-east-1:590781477698:listener/app/badatz-internal-alb/1d3fb2c2a2df313e/ab9988b8f0a79087
+      Priority: 90
     Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Resource
-  publicapiDeployment5E60F53E692334c003e8946d4e39d20067689fb2:
-    Type: AWS::ApiGateway::Deployment
+      aws:cdk:path: badatz-api-lambda-stack/ALBListener/badatz-api/Resource
+  badatzapitgC58E3340:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Description: Automatically created by the RestApi construct
-      RestApiId:
-        Ref: publicapi08C5CDE1
+      TargetType: lambda
+      Targets:
+        - Id:
+            Fn::GetAtt:
+              - badatzapilambdaA540EC2F
+              - Arn
     DependsOn:
-      - publicapiproxyANY3BD3677A
-      - publicapiproxy8669854E
-      - publicapiANYA46FA57A
+      - badatzapilambdaInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYDCACCDC8
     Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Deployment/Resource
-  publicapiDeploymentStageprodE63D8D29:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      DeploymentId:
-        Ref: publicapiDeployment5E60F53E692334c003e8946d4e39d20067689fb2
-      RestApiId:
-        Ref: publicapi08C5CDE1
-      StageName: prod
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/DeploymentStage.prod/Resource
-  publicapiCustomDomainE6822DD8:
-    Type: AWS::ApiGateway::DomainName
-    Properties:
-      DomainName: public-api.insightxc.com
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: arn:aws:acm:us-east-1:590781477698:certificate/2140f7f3-e699-43f6-9518-fad14c04f100
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/CustomDomain/Resource
-  publicapiCustomDomainMapbadatzapilambdastackpublicapi014CF7777D8E9D4B:
-    Type: AWS::ApiGateway::BasePathMapping
-    Properties:
-      DomainName:
-        Ref: publicapiCustomDomainE6822DD8
-      RestApiId:
-        Ref: publicapi08C5CDE1
-      Stage:
-        Ref: publicapiDeploymentStageprodE63D8D29
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/CustomDomain/Map:--=>badatzapilambdastackpublicapi014CF777/Resource
-  publicapiproxy8669854E:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId:
-        Fn::GetAtt:
-          - publicapi08C5CDE1
-          - RootResourceId
-      PathPart: "{proxy+}"
-      RestApiId:
-        Ref: publicapi08C5CDE1
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/{proxy+}/Resource
-  publicapiproxyANYApiPermissionbadatzapilambdastackpublicapi014CF777ANYproxyE1123197:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-          - badatzapilambdaA540EC2F
-          - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Join:
-          - ""
-          - - "arn:aws:execute-api:us-east-1:590781477698:"
-            - Ref: publicapi08C5CDE1
-            - /
-            - Ref: publicapiDeploymentStageprodE63D8D29
-            - /*/*
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/{proxy+}/ANY/ApiPermission.badatzapilambdastackpublicapi014CF777.ANY..{proxy+}
-  publicapiproxyANYApiPermissionTestbadatzapilambdastackpublicapi014CF777ANYproxyBBFE78A7:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-          - badatzapilambdaA540EC2F
-          - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Join:
-          - ""
-          - - "arn:aws:execute-api:us-east-1:590781477698:"
-            - Ref: publicapi08C5CDE1
-            - /test-invoke-stage/*/*
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/{proxy+}/ANY/ApiPermission.Test.badatzapilambdastackpublicapi014CF777.ANY..{proxy+}
-  publicapiproxyANY3BD3677A:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        IntegrationHttpMethod: POST
-        Type: AWS_PROXY
-        Uri:
-          Fn::Join:
-            - ""
-            - - arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/
-              - Fn::GetAtt:
-                  - badatzapilambdaA540EC2F
-                  - Arn
-              - /invocations
-      ResourceId:
-        Ref: publicapiproxy8669854E
-      RestApiId:
-        Ref: publicapi08C5CDE1
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/{proxy+}/ANY/Resource
-  publicapiANYApiPermissionbadatzapilambdastackpublicapi014CF777ANY9F76117C:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-          - badatzapilambdaA540EC2F
-          - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Join:
-          - ""
-          - - "arn:aws:execute-api:us-east-1:590781477698:"
-            - Ref: publicapi08C5CDE1
-            - /
-            - Ref: publicapiDeploymentStageprodE63D8D29
-            - /*/
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/ANY/ApiPermission.badatzapilambdastackpublicapi014CF777.ANY..
-  publicapiANYApiPermissionTestbadatzapilambdastackpublicapi014CF777ANYCABEDB3A:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Fn::GetAtt:
-          - badatzapilambdaA540EC2F
-          - Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        Fn::Join:
-          - ""
-          - - "arn:aws:execute-api:us-east-1:590781477698:"
-            - Ref: publicapi08C5CDE1
-            - /test-invoke-stage/*/
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/ANY/ApiPermission.Test.badatzapilambdastackpublicapi014CF777.ANY..
-  publicapiANYA46FA57A:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        IntegrationHttpMethod: POST
-        Type: AWS_PROXY
-        Uri:
-          Fn::Join:
-            - ""
-            - - arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/
-              - Fn::GetAtt:
-                  - badatzapilambdaA540EC2F
-                  - Arn
-              - /invocations
-      ResourceId:
-        Fn::GetAtt:
-          - publicapi08C5CDE1
-          - RootResourceId
-      RestApiId:
-        Ref: publicapi08C5CDE1
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public_api/Default/ANY/Resource
-  publicapiinsightxccomtopublicapi9324A470:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      AliasTarget:
-        DNSName:
-          Fn::GetAtt:
-            - publicapiCustomDomainE6822DD8
-            - RegionalDomainName
-        HostedZoneId:
-          Fn::GetAtt:
-            - publicapiCustomDomainE6822DD8
-            - RegionalHostedZoneId
-      HostedZoneId: Z03545982I5FRH4AR48BO
-      Name: public-api.insightxc.com.
-      Type: A
-    Metadata:
-      aws:cdk:path: badatz-api-lambda-stack/public-api.insightxc.com-to-public_api/Resource
+      aws:cdk:path: badatz-api-lambda-stack/badatz-api-tg/Resource
   CDKMetadata:
     Type: AWS::CDK::Metadata
     Properties:
-      Analytics: v2:deflate64:H4sIAAAAAAAA/31Qy27CMBD8Fu7GJUR8AI9SIZU2ChJXtDhLcElsy16LRlH+vXYCVdRDTzsz+5yd8yRZ8NkE7m4qitu0kmfeHgjEjeXotLcCWcid2grqcwG83XolSGrF1hc1xhnaWjoXWMck1LzNdYUxEWPHXHoC55AcX8YQOF95cUNagUOGYh62ovBWUvNmtTex839hp0qLzrGdIrQXEHg04lUVRktFsfiYrZ+0Y2BkCYR3aHj73jsJ7mhpZH/hA27QVLqpcegfsfCPsvcygI2uQaoPqHttxKKXDOi6B2OkKmP2r/R8am87s/q7+X3zcMmA90hXXURpQB0LlgkXKW+XOQpti6E8ogNS17H+rfG+x+JPT8bTeGjHsibMUi8pT2Y8SSdfTsqp9YpkjTwf4g9ipMnWEAIAAA==
+      Analytics: v2:deflate64:H4sIAAAAAAAA/1VQ0U7DMAz8lr1nYd3EB2wgeBliKrxPXmqKWZpEicOoqvw7SQtT9+S7c2LfeS2r6l6uFnAJS9Wcl5pOcnhjUGdRY7DRKxS5dxw0dKcG5PAUjWKyRjx8mDk+oO8ohMySIOjkUFuNpVFqEmFzhBCQg9yWkrncRXVG3kFAgWqdt6KKnrh/9ja68vNGSAIctcB4gV4O+9FNdshbR+OWP/iITtu+Q8NFnbGcqR39TOA/3Lj+4O1Pf407TZvwC/KnbYo0oSRQQ2BS2kJzAg1GkWm/s/utc5oUlHPsKTAa9HWcLnDDZ+/ewbfI17gzmpIYz1S85vml+xrZRZ6bS+LQZ0/mbiOrlaw2i69AtPTRMHUo66n+AkHVp5DgAQAA
     Metadata:
       aws:cdk:path: badatz-api-lambda-stack/CDKMetadata/Default
 Outputs:
@@ -502,17 +279,6 @@ Outputs:
           - Ref: AWS::URLSuffix
           - /
           - Ref: badatzapilambdarestDeploymentStageprod633615FB
-          - /
-  publicapiEndpoint978F06B0:
-    Value:
-      Fn::Join:
-        - ""
-        - - https://
-          - Ref: publicapi08C5CDE1
-          - .execute-api.us-east-1.
-          - Ref: AWS::URLSuffix
-          - /
-          - Ref: publicapiDeploymentStageprodE63D8D29
           - /
 Parameters:
   BootstrapVersion:

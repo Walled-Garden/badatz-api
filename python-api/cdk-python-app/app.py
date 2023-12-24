@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_route53_targets as route53_targets,
     aws_elasticloadbalancingv2 as elbv2,
     aws_elasticloadbalancingv2_targets as elb_targets,
+    aws_apigateway as _apigw,
 )
 from constructs import Construct
 
@@ -45,6 +46,9 @@ class ApiCorsLambdaStack(Stack):
             timeout=cdk.Duration.seconds(60),
             vpc=badatz_vpc,
         )
+
+        # just so testing locally with `sam local start-api` will work. DO NOT USE IN PRODUCTION
+        _apigw.LambdaRestApi(self, "badatz_api_lambda_rest", handler=badatz_lambda)
 
         # use ALB instead of API Gateway to route to the lambda directly
         # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/lambda-functions.html
