@@ -2,34 +2,26 @@ import { PrismaClient } from "@prisma/client";
 import fastify from "fastify";
 
 const prisma = new PrismaClient();
-const app = fastify({ logger: true });
+export const app = fastify({ logger: true });
 
 const stringify = (obj: any) =>
   JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v));
 
 app.get("/", async (req, res) => {
   // return first 100 test_items
-  // const test_items = await prisma.test_item.findMany({
-  //   where: { AND: [{ launch_id: 100 }, { path: { nlevel: 1 } }] },
-  //   take: 1
-  // });
-  const test_items = await prisma.$queryRaw`
-        SELECT * FROM public.test_item
-        where (nlevel("test_item"."path") = 1 and "test_item"."launch_id" = 1135)
-        `;
+  const test_items = await prisma.test_item.findMany({
+    where: { AND: [{ launch_id: 1135, parent_id: null }] },
+    include: {
+      item_attribute: true,
+    },
+  });
+  // const test_items = await prisma.$queryRaw`
+  //       SELECT * FROM public.test_item
+  //       where (nlevel("test_item"."path") = 1 and "test_item"."launch_id" = 1135)
+  //       `;
 
   // Sending the JSON object as a response
-  return res.send(stringify(test_items));
-});
-
-app.listen({ port: 3000 }, err => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`
-  🚀 Server ready at: http://localhost:3000
-  ⭐️ See sample requests: http://pris.ly/e/ts/rest-fastify#3-using-the-rest-api`);
+  return res.send(test_items.length);
 });
 
 //app.post<{

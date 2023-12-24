@@ -13,11 +13,10 @@ sys.path.append(str((Path(__file__).parent / "deps").absolute()))
 dotenv.load_dotenv()
 
 from flask import Flask, request, jsonify
-
-# from flask_lambda import FlaskLambda
+from flask_cors import CORS
 
 app = Flask(__name__)
-client = app.test_client()
+CORS(app)
 
 # PostgreSQL connection configuration load from environment variables
 db_host = os.environ.get("DB_HOST")
@@ -64,12 +63,7 @@ def get_test_items():
     rows = cursor.fetchall()
     data = [dict(row) for row in rows]
 
-    return jsonify(
-        {
-            "body": data,
-            "statusCode": 200,
-        }
-    )
+    return jsonify(data)
 
 
 @app.route("/")
@@ -77,58 +71,5 @@ def index():
     return "Hello, World!"
 
 
-@app.route("/get_env")
-def get_env():
-    return jsonify(
-        {
-            "db_host": db_host,
-            "db_name": db_name,
-            "db_user": db_user,
-            "db_password": db_password,
-            "db_port": db_port,
-        }
-    )
-
-
-@app.route("/echo", methods=["POST"])
-def echo():
-    return jsonify({"body": request.json})
-
-
-# def get_items
-# def lambda_handler(event, context):
-#
-#
-#     try:
-#
-#         # Convert the rows to a list of dictionaries
-#         results = []
-#         for row in rows:
-#             # Convert each row to a dictionary
-#             results.append(
-#                 {
-#                     "column1": row[0],
-#                     "column2": row[1],
-#                     # Add more columns as needed
-#                 }
-#             )
-#
-#         # Commit the transaction
-#         conn.commit()
-#
-#         # Close cursor and connection
-#         cursor.close()
-#         conn.close()
-#
-#         # Return the queried results
-#         return {"statusCode": 200, "body": json.dumps(results)}
-#
-#     except Exception as e:
-#         # If an error occurs, return an error response
-#         return {"statusCode": 500, "body": json.dumps(str(e))}
-
-
 if __name__ == "__main__":
-    # lambda_handler(None, None)
     app.run(debug=True)
-    # print(jsonify("route2"))

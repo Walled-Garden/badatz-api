@@ -42,6 +42,7 @@ class ApiCorsLambdaStack(Stack):
                     ],
                 ),
             ),
+            timeout=cdk.Duration.seconds(60),
             vpc=badatz_vpc,
         )
 
@@ -80,15 +81,15 @@ class ApiCorsLambdaStack(Stack):
             zone_name="insightxc.com",
         )
 
-        route53.ARecord(
-            self,
-            "rp.api.insightxc.com-to-badatz_alb",
-            zone=insightxc_hosted_zone,
-            target=route53.RecordTarget.from_alias(
-                route53_targets.LoadBalancerTarget(badatz_alb)
-            ),
-            record_name="rp.api.insightxc.com",
-        )
+        # route53.ARecord(
+        #     self,
+        #     "rp.api.insightxc.com-to-badatz-alb",
+        #     zone=insightxc_hosted_zone,
+        #     target=route53.RecordTarget.from_alias(
+        #         route53_targets.LoadBalancerTarget(badatz_alb)
+        #     ),
+        #     record_name="rp.api.insightxc.com",
+        # )
         # now when user navigates to rp.api.insightxc.com,
         # the request will be routed to the ALB->Lambda->Flask app ../src/app.py !
 
