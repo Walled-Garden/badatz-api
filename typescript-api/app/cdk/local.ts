@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { App } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import { BadatzStack } from "./app";
+import { BadatzStack } from "./deploy";
 class TestBadatzStack extends BadatzStack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -16,7 +16,7 @@ class TestBadatzStack extends BadatzStack {
 }
 
 const app = new App();
-new TestBadatzStack(app, "local", {
+new TestBadatzStack(app, "LocalTesting", {
   env: { account: "590781477698", region: "us-east-1" },
 });
 app.synth();

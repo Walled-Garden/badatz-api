@@ -6,6 +6,7 @@ import * as route53 from "aws-cdk-lib/aws-route53";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as elbTargets from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
 import { Construct } from "constructs";
+import path from "node:path";
 
 const BADATZ_VPC_ID = "vpc-000442496728ac699";
 const INSIGHTXC_HOSTED_ZONE_ID = "Z03545982I5FRH4AR48BO";
@@ -28,9 +29,9 @@ export class BadatzStack extends Stack {
     // Create a new Lambda function, within Badatz VPC
     // The Lambda function uses the flask app from the ../src directory as the handler
     const badatzLambda = new lambda.Function(this, "badatz_api_lambda", {
-      handler: "src/handler.handler",
+      handler: path.resolve("handler.handler"),
       runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset("../app"),
+      code: lambda.Code.fromAsset(path.resolve(__dirname, "../dist")),
       timeout: cdk.Duration.seconds(60),
       vpc: badatzVpc,
     });

@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/run-server.ts",
     "build": "rollup -c",
-    "deploy": "rollup -c && cdk deploy"
+    "deploy": "cdk deploy --app \"yarn ts-node cdk/deploy.ts\"",
+    "cdk-run-local": "rollup -c && cdk synth --app \"yarn run --silent ts-node cdk/local.ts\" --no-staging > cdk/local-template.yaml && sam local start-api -t cdk/local-template.yaml",
+    "cdk-deploy": "rollup -c && cdk deploy --app \"yarn run --silent ts-node cdk/deploy.ts\""
   },
   "dependencies": {
+    "@fastify/formbody": "^7.4.0",
     "@prisma/client": "^5.7.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "fastify": "4.25.1",
@@ -21,8 +24,8 @@
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "20.10.5",
-    "aws-cdk-lib": "2.115.0",
     "aws-cdk": "2.115.0",
+    "aws-cdk-lib": "2.115.0",
     "constructs": "^10.0.0",
     "fs-extra": "^11.2.0",
     "prisma": "^5.7.1",
@@ -32,7 +35,6 @@
     "tsx": "^4.6.2",
     "typescript": "5.3.3",
     "vite": "^5.0.10"
-
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

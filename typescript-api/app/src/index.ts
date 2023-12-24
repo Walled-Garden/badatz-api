@@ -1,16 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import fastify from "fastify";
+import formbody from "@fastify/formbody";
 
 const prisma = new PrismaClient();
 export const app = fastify({ logger: true });
+app.register(formbody);
 
 const stringify = (obj: any) =>
   JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v));
 
-app.get("/", async (req, res) => {
+app.post("/", async (req, res) => {
+  const body = req.body;
+  if (!body?.launch_id) {
+    return res.send("no launch_id");
+  }
   // return first 100 test_items
   const test_items = await prisma.test_item.findMany({
-    where: { AND: [{ launch_id: 1135, parent_id: null }] },
+    where: { AND: [{ launch_id: body.launch_id, parent_id: null }] },
     include: {
       item_attribute: true,
     },
@@ -21,7 +27,12 @@ app.get("/", async (req, res) => {
   //       `;
 
   // Sending the JSON object as a response
-  return res.send(test_items);
+  return res.send(stringify(test_items));
+});
+app.get("/hey", async (req, res) => {
+  // return first 100 test_items
+
+  return res.send("hey");
 });
 
 //app.post<{
