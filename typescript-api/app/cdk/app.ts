@@ -3,10 +3,8 @@ import { App, Stack } from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as route53 from "aws-cdk-lib/aws-route53";
-import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as elbTargets from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
-import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
 
 const BADATZ_VPC_ID = "vpc-000442496728ac699";

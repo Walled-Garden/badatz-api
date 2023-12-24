@@ -21,7 +21,7 @@ app.get("/", async (req, res) => {
   //       `;
 
   // Sending the JSON object as a response
-  return res.send(test_items.length);
+  return res.send(test_items);
 });
 
 //app.post<{

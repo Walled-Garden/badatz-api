@@ -1,5 +1,5 @@
 {
-  "app": "yarn run ts-node --prefer-ts-exts app.ts",
+  "app": "yarn ts-node --prefer-ts-exts cdk/app.ts",
   "watch": {
     "include": [
       "**"
