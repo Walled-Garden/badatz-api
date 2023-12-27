@@ -38,8 +38,8 @@ Resources:
     Properties:
       Code:
         S3Bucket: cdk-hnb659fds-assets-590781477698-us-east-1
-        S3Key: 9f627520b76d2caa6119e9e83e098fe7c33b3f2dc5a6f61e362e8db003d2d233.zip
-      Handler: /home/tmax/development/badatz-monorepo/badatz-api/typescript-api/app/handler.handler
+        S3Key: 915002f84e7f8a6aad098d88049ac62df2cef3ed5b05722bf923893053b3ae77.zip
+      Handler: /home/eliav/development/idf/badatz-monorepo/badatz-api/typescript-api/app/handler.handler
       Role:
         Fn::GetAtt:
           - badatzapilambdaServiceRole882253AB
@@ -61,7 +61,7 @@ Resources:
       - badatzapilambdaServiceRole882253AB
     Metadata:
       aws:cdk:path: LocalTesting/badatz_api_lambda/Resource
-      aws:asset:path: /home/tmax/development/badatz-monorepo/badatz-api/typescript-api/app/dist
+      aws:asset:path: /home/eliav/development/idf/badatz-monorepo/badatz-api/typescript-api/app/dist
       aws:asset:is-bundled: false
       aws:asset:property: Code
   badatzapilambdaInvoke2UTWxhlfyqbT5FTn5jvgbLgjFfJwzswGk55DU1HYDCACCDC8:
@@ -312,7 +312,7 @@ Resources:
   CDKMetadata:
     Type: AWS::CDK::Metadata
     Properties:
-      Analytics: v2:deflate64:H4sIAAAAAAAA/1VQTU/DMAz9LbtngQ0hce1AcBliKtwnLzXFW5pEibNRVfnvJK0YRYrk9+z44721XK3u5e0CLmGpmtNS00EO7wzqJGoMNnqFItf2g4bu0IAcnqNRTNaIx08zxzv0HYWQWRIEnRxqq7EUSkwi3O0hBOQgqxIyl5uoTsgbCChQrfNWVNET9y/eRlc6/yWSQA2BSWkLzQE0GEWmPee+yjlNCsohWwqMBn0dp93/+OzfB/gW+bpoRpMARy0wXqCXw3YUnY3gytEo5g9WStloWDyh07bvMMOcnbHsYjteMYFfO0fBO2+/+6vB0+AJvyJ/2aakJpSSGB0rQ7LgUniL7CLPu5IwtkF5DDfn1YPMb704BqKlzwdSh7Ke4g9/X3Ew7QEAAA==
+      Analytics: v2:deflate64:H4sIAAAAAAAA/1VQy27CMBD8Fu7GDUH9gNCqvVAVhd7R4mzDgmNH3jU0ivLvlROVhtPOzD5nc71aPetsATdemuqytHTU/V7AXFSJ7GMwqODGh95Cc6xA92/RGSHv1Mu3m+MdhoaYybtBETS6L73FlEhxULw+ADMK6yIFxWu9ieaCsgFGhSbX/R5NDCTde/CxTZ0PwqDQAgsZ66E6ggVnyNXXXPdF21oykA7ZEgs6DGWcdj/wWd0XhBrlvmhGBwUt1SB4g07329F0iSxFS6OZf1gY46MT9Yqt9V2DTpI6Y3uBerxiAn/vHA3vgv/p7g+eBk/4A+XkqyRNaBjU+LE0hFydEp9R2ijzrkE5X6E+89M1z/Qq09nizETLEJ1Qg7qc4i/se3AM7QEAAA==
     Metadata:
       aws:cdk:path: LocalTesting/CDKMetadata/Default
 Outputs:
