@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="cdk-run-local" type="js.build_tools.npm" folderName="badatz-api" nameIsGenerated="true">
+    <package-json value="$PROJECT_DIR$/badatz-api/typescript-api/app/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="cdk-run-local" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
