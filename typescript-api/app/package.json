@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fastify/formbody": "^7.4.0",
+    "@fastify/type-provider-typebox": "^3.5.0",
     "@prisma/client": "^5.7.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "fastify": "4.25.1",

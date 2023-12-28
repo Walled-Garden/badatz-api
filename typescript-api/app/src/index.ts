@@ -1,18 +1,19 @@
-import { PrismaClient } from "@prisma/client";
-import fastify from "fastify";
-import formbody from "@fastify/formbody";
+import { PrismaClient } from '@prisma/client';
+import Fastify from 'fastify';
+import formbody from '@fastify/formbody';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 const prisma = new PrismaClient();
-export const app = fastify({ logger: true });
+export const app = Fastify().withTypeProvider<TypeBoxTypeProvider>({ logger: true });
 app.register(formbody);
 
 const stringify = (obj: any) =>
-  JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v));
+  JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? v.toString() : v));
 
-app.post("/", async (req, res) => {
+app.post<{}>('/', async (req, res) => {
   const body = req.body;
   if (!body?.launch_id) {
-    return res.send("no launch_id");
+    return res.send('no launch_id');
   }
   // return first 100 test_items
   const test_items = await prisma.test_item.findMany({
@@ -29,10 +30,10 @@ app.post("/", async (req, res) => {
   // Sending the JSON object as a response
   return res.send(stringify(test_items));
 });
-app.get("/hey", async (req, res) => {
+app.get('/hey', async (req, res) => {
   // return first 100 test_items
 
-  return res.send("hey");
+  return res.send('hey');
 });
 
 //app.post<{
