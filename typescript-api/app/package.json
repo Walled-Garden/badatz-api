@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "module": "src/handler.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/run-server.ts",
+    "start": "tsx src/run-server.ts",
     "build": "rollup -c",
     "deploy": "cdk deploy --app \"yarn ts-node cdk/deploy.ts\"",
     "cdk-run-local": "rollup -c && cdk synth --app \"pnpx ts-node cdk/local.ts\" --no-staging > cdk/local-template.yaml && sam local start-api -t cdk/local-template.yaml",
@@ -13,6 +15,7 @@
     "init-project": "pnpx prisma generate"
   },
   "dependencies": {
+    "@fastify/cors": "^8.5.0",
     "@fastify/formbody": "^7.4.0",
     "@fastify/type-provider-typebox": "^3.5.0",
     "@prisma/client": "^5.7.1",

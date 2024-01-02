@@ -1,6 +1,6 @@
-import { app } from "./index";
+import { app } from "./server";
 
-app.listen({ port: 3000 }, (err) => {
+app.listen({ port: 3000, host: "0.0.0.0" }, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);

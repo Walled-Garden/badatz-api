@@ -5,8 +5,11 @@
     "strict": true,
     "lib": ["esnext"],
     "target": "ES2020",
+    "module": "ES2022",
     "esModuleInterop": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "noUnusedParameters": false,
+    "noUnusedLocals": false,
   },
   "exclude": [
     "node_modules",

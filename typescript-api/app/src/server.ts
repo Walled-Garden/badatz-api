@@ -1,39 +1,86 @@
-import { PrismaClient } from '@prisma/client';
-import Fastify from 'fastify';
-import formbody from '@fastify/formbody';
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { PrismaClient } from "@prisma/client";
+import fastify from "fastify";
+import formbody from "@fastify/formbody";
+import { Response__test_items } from "./types";
+import cors from "@fastify/cors";
 
 const prisma = new PrismaClient();
-export const app = Fastify().withTypeProvider<TypeBoxTypeProvider>({ logger: true });
+// export const app = Fastify().withTypeProvider<TypeBoxTypeProvider>({ logger: true });
+export const app = fastify({ logger: true });
+await app.register(cors, {
+  origin: true,
+  // put your options here
+});
+
 app.register(formbody);
 
 const stringify = (obj: any) =>
-  JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? v.toString() : v));
+  JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v));
 
-app.post<{}>('/', async (req, res) => {
-  const body = req.body;
-  if (!body?.launch_id) {
-    return res.send('no launch_id');
-  }
-  // return first 100 test_items
-  const test_items = await prisma.test_item.findMany({
-    where: { AND: [{ launch_id: body.launch_id, parent_id: null }] },
-    include: {
-      item_attribute: true,
-    },
-  });
-  // const test_items = await prisma.$queryRaw`
-  //       SELECT * FROM public.test_item
-  //       where (nlevel("test_item"."path") = 1 and "test_item"."launch_id" = 1135)
-  //       `;
+app.post<{ Body: { launch_id: number; Reply: Response__test_items } }>(
+  "/test_items",
+  async (req, res) => {
+    const body = req.body;
+    if (!body?.launch_id) {
+      return res.send("no launch_id");
+    }
+    const test_items = await prisma.test_item.findMany({
+      where: { AND: [{ launch_id: body.launch_id, parent_id: null }] },
+      select: {
+        launch: {
+          select: {
+            id: true,
+            name: true,
+            number: true,
+          },
+        },
+        item_id: true,
+        test_item_results: {
+          select: {
+            status: true,
+          },
+        },
+        item_attribute: {
+          select: {
+            value: true,
+            key: true,
+          },
+        },
+        // // todo: add parameter info as well
+        // parameter: {
+        //   select: {
+        //     value: true,
+        //     key: true,
+        //   },
+        // },
+      },
+    });
 
-  // Sending the JSON object as a response
-  return res.send(stringify(test_items));
-});
-app.get('/hey', async (req, res) => {
-  // return first 100 test_items
+    const parsed_test_items = test_items.map((item) => {
+      const parsed_item = {
+        // ...item,
+        item_id: item.item_id,
+        ...item.test_item_results,
+        attributes: item.item_attribute.reduce((acc, curr) => {
+          acc[curr.key] = curr.value;
+          return acc;
+        }, {}),
+        launch: item.launch,
 
-  return res.send('hey');
+        // parameter: item.parameter,
+      };
+      return parsed_item;
+    });
+
+    // Sending the JSON object as a response
+    return res
+      .header("Content-Type", "application/json")
+      .send(stringify(parsed_test_items));
+  },
+);
+
+app.get("/hey", async (req, res) => {
+  return res.send("hey");
 });
 
 //app.post<{
