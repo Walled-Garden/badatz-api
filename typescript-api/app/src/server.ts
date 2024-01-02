@@ -26,6 +26,7 @@ app.post<{ Body: { launch_id: number; Reply: Response__test_items } }>(
     }
     const test_items = await prisma.test_item.findMany({
       where: { AND: [{ launch_id: body.launch_id, parent_id: null }] },
+      orderBy: { item_id: "asc" },
       select: {
         launch: {
           select: {

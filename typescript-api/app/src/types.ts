@@ -32,3 +32,5 @@ export type Attributes<
 > = {
   [key in Key]: Val;
 };
+
+type t = { [key in KnownAttributeKey]: string };
