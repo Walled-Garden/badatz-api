@@ -12,6 +12,12 @@
     "build-tsc": "tsc",
     "preview": "node dist/run-server.js",
 
+    "docker-build": "docker build -t badatz-api .",
+    "docker-login": "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 590781477698.dkr.ecr.us-east-1.amazonaws.com",
+    "docker-tag": "docker tag badatz-api:latest 590781477698.dkr.ecr.us-east-1.amazonaws.com/badatz-api:latest",
+    "docker-push": "docker push 590781477698.dkr.ecr.us-east-1.amazonaws.com/badatz-api:latest",
+    "docker-deploy": "pnpm docker-build && pnpm docker-login && pnpm docker-tag && pnpm docker-push",
+
     "cdk-run-local": "rollup -c && cdk synth --app \"pnpx ts-node cdk/local.ts\" --no-staging > cdk/local-template.yaml && sam local start-api -t cdk/local-template.yaml",
     "cdk-run-local-fast": "sam local start-api -t cdk/local-template.yaml",
     "cdk-deploy": "rollup -c && cdk deploy --app \"pnpx ts-node cdk/deploy.ts\"",

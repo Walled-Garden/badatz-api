@@ -4,6 +4,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+    image: badatz-api
     ports:
       - 3000:3000
     restart: "no"
