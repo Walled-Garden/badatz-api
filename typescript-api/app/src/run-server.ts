@@ -1,4 +1,4 @@
-import { app } from "./server";
+import { app } from "./server.js";
 
 app.listen({ port: 3000, host: "0.0.0.0" }, (err) => {
   if (err) {

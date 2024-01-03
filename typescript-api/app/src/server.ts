@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import fastify from "fastify";
 import formbody from "@fastify/formbody";
-import { Response__test_items } from "./types";
+import { Response__test_items } from "./types.js";
 import cors from "@fastify/cors";
 
 const prisma = new PrismaClient();
@@ -62,10 +62,17 @@ app.post<{ Body: { launch_id: number; Reply: Response__test_items } }>(
         // ...item,
         item_id: item.item_id,
         ...item.test_item_results,
-        attributes: item.item_attribute.reduce((acc, curr) => {
-          acc[curr.key] = curr.value;
-          return acc;
-        }, {}),
+        attributes: item.item_attribute.reduce(
+          (acc: { [key: string]: any }, curr) => {
+            if (curr.key === null) {
+              return acc;
+            }
+            acc[curr.key] = curr.value;
+
+            return acc;
+          },
+          {},
+        ),
         launch: item.launch,
 
         // parameter: item.parameter,

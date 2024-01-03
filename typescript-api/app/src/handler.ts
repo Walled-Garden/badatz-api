@@ -1,4 +1,4 @@
-import { app } from "./server";
+import { app } from "./server.js";
 
 export const handler = async (event: any, context: any): Promise<any> => {
   // console.log("event", event);
