@@ -1,0 +1,9 @@
+services:
+  app:
+    container_name: badatz-api
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    restart: "no"
