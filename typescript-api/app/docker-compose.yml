@@ -6,5 +6,5 @@ services:
       dockerfile: Dockerfile
     image: badatz-api
     ports:
-      - 3000:3000
+      - 5000:5000
     restart: "no"

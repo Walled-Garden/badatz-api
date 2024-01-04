@@ -8,7 +8,7 @@ RUN pnpm install
 RUN pnpm run init-project
 RUN pnpm run build-tsc
 
-EXPOSE 3000
+EXPOSE 5000
 
 CMD ["pnpm", "run", "preview"]
 
