@@ -59,7 +59,8 @@ jobs:
           IMAGE_TAG: ${{ steps.vars.outputs.tag }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         with:
-          context: .
+          context: badatz-api/typescript-api/app
+          dockerfile: Dockerfile
           push: true
           build-args: |
             APP_VERSION=${{ env.VERSION }}
