@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 // export const app = Fastify().withTypeProvider<TypeBoxTypeProvider>({ logger: true });
 export const app = fastify({ logger: true });
 await app.register(cors, {
-  origin: true,
+  origin: "*",
   // put your options here
 });
 

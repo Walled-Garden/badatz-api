@@ -1,7 +1,7 @@
-*/node_modules/
-*/jsReplace/
-*/compiled/
-*/coverage/
+node_modules
+jsReplace
+compiled
+coverage
 npm-debug.log
 Dockerfile*
 docker-compose*
